@@ -1,0 +1,24 @@
+sources:
+  - name: dd_dwh
+    database: DWH
+    schema: DD_DWH
+    tables:
+      - name: ORDER_INVOICE
+      - name: PARTY_ORGANIZATION
+      - name: CAMPAIGN
+      - name: CUSTOMER_JOURNEY_PROPOSALS
+      - name: ITEM
+      - name: PARTY
+      - name: PARTY_CONTACT
+      - name: FORECAST
+      - name: CUSTOMER_JOURNEY_APPOINTMENTS
+  - name: prod_bk
+    database: DWH
+    schema: PROD_BK
+    tables:
+      - name: SM_DELETION_EVENTS
+  - name: dd_sl
+    database: DWH
+    schema: DD_SL
+    tables:
+      - name: D_SERVICES
