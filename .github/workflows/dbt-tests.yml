@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # 3️⃣ Install Microsoft ODBC Driver 18 for SQL Server (required for dbt-sqlserver)
+      # 3️⃣ Install Microsoft ODBC Driver 18 for SQL Server
       - name: Install ODBC Driver 18 for SQL Server
         run: |
           curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
@@ -30,7 +30,7 @@ jobs:
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
 
-      # 4️⃣ Install dbt (SQL Server adapter for Synapse)
+      # 4️⃣ Install dbt (SQL Server adapter)
       - name: Install dbt
         run: |
           pip install dbt-core dbt-sqlserver
@@ -41,23 +41,24 @@ jobs:
         run: |
           mkdir -p ~/.dbt
           cat > ~/.dbt/profiles.yml <<EOL
-          dbt_testing_project:
-            target: dev
-            outputs:
-              dev:
-                type: sqlserver
-                driver: "ODBC Driver 18 for SQL Server"
-                server: "${{ secrets.SYNAPSE_SERVER }}"
-                database: "${{ secrets.SYNAPSE_DATABASE }}"
-                schema: "${{ secrets.SYNAPSE_SCHEMA }}"
-                user: "${{ secrets.SYNAPSE_USER }}"
-                password: "${{ secrets.SYNAPSE_PASSWORD }}"
-                port: 1433
-                encrypt: true
-                trust_cert: true
-          EOL
+dbt_testing_project:
+  target: dev
+  outputs:
+    dev:
+      type: sqlserver
+      driver: "ODBC Driver 18 for SQL Server"
+      server: "${{ secrets.SYNAPSE_SERVER }}"
+      database: "${{ secrets.SYNAPSE_DATABASE }}"
+      schema: "${{ secrets.SYNAPSE_SCHEMA }}"
+      user: "${{ secrets.SYNAPSE_USER }}"
+      password: "${{ secrets.SYNAPSE_PASSWORD }}"
+      port: 1433
+      encrypt: true
+      trust_cert: true
+EOL
 
-      # 6️⃣ Debug connection & run only dbt tests
+
+      # 6️⃣ Debug connection & run dbt tests
       - name: Run dbt tests
         run: |
           dbt debug --target dev
