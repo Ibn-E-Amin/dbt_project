@@ -30,13 +30,13 @@ jobs:
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
 
-      # 4️⃣ Install dbt (SQL Server adapter)
+      # 4️⃣ Install dbt (Synapse adapter)
       - name: Install dbt
         run: |
-          pip install dbt-core dbt-sqlserver
+          pip install dbt-core dbt-synapse
           dbt --version
 
-      # 5️⃣ Configure dbt profile using GitHub Secrets
+      # 5️⃣ Configure dbt profile with Service Principal authentication
       - name: Configure dbt profile
         run: |
           mkdir -p ~/.dbt
@@ -45,16 +45,19 @@ jobs:
             target: dev
             outputs:
               dev:
-                type: sqlserver
+                type: synapse
                 driver: "ODBC Driver 18 for SQL Server"
                 server: "${{ secrets.SYNAPSE_SERVER }}"
                 database: "${{ secrets.SYNAPSE_DATABASE }}"
                 schema: "${{ secrets.SYNAPSE_SCHEMA }}"
-                user: "${{ secrets.SYNAPSE_USER }}"
-                password: "${{ secrets.SYNAPSE_PASSWORD }}"
                 port: 1433
                 encrypt: true
                 trust_cert: true
+                authentication: ActiveDirectoryServicePrincipal
+                user: "${{ secrets.SYNAPSE_USER }}"
+                client_id: "${{ secrets.SYNAPSE_CLIENT_ID }}"
+                client_secret: "${{ secrets.SYNAPSE_CLIENT_SECRET }}"
+                tenant_id: "${{ secrets.SYNAPSE_TENANT_ID }}"
           EOL
 
       # 6️⃣ Debug connection & run dbt tests
