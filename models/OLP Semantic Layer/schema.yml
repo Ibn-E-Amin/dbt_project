@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: d_invoice_status
+  - name: D_INVOICE_STATUS
     description: "Tracks the current status of invoices with validity constraints."
     columns:
       - name: INVOICE_ID
@@ -14,7 +14,7 @@ models:
       - name: END_DATE
         description: "Date when this status ended (null if active)"
 
-  - name: f_invoice
+  - name: F_INVOICE
     description: "Fact table containing invoice-level financials."
     columns:
       - name: INVOICE_ID
@@ -37,30 +37,7 @@ models:
       - name: GROSS_SUBTOTAL
         description: "Subtotal before any discounts"
 
-  # - name: d_invoice
-  #   description: "Dimension table containing invoice details and links to services."
-  #   columns:
-  #     - name: INVOICE_ID
-  #       description: "Unique internal invoice identifier"
-  #       tests: [not_null, unique]
-  #     - name: STORE_ID
-  #       description: "Store/organization ID linked to the invoice"
-  #     - name: PROPOSAL_ID
-  #       description: "Root proposal or invoice ID"
-  #     - name: LEAD_ID
-  #       description: "Customer party ID"
-  #     - name: INVOICE_TYPE
-  #       description: "Type of invoice"
-  #     - name: CAMPAIGN_ID
-  #       description: "Marketing campaign reference (if any)"
-  #     - name: SERVICE_ID
-  #       description: "Service identifier from D_SERVICES"
-  #     - name: TEAM_MEMBER
-  #       description: "Team member responsible for the invoice"
-
-
-models:
-  - name: d_services
+  - name: D_SERVICES
     description: "List of unique services across items, invoices, and proposals."
     columns:
       - name: service_id
@@ -73,8 +50,7 @@ models:
         description: "Name of the service."
         tests: [not_null]
 
-models:
-  - name: d_invoice
+  - name: D_INVOICE
     description: "Invoice dimension table enriched with store, proposal, customer, service, and team member details."
     columns:
       - name: invoice_id
@@ -95,63 +71,43 @@ models:
       - name: team_member
         description: "Owner/team member responsible for the invoice."
 
-
-version: 2
-
-models:
-  - name: d_leads
+  - name: D_LEAD
     description: "Leads dimension table containing customer lead information enriched with campaign and appointment data."
     columns:
       - name: LEAD_ID
         description: "Unique identifier for the lead."
         tests: [unique, not_null]
-
       - name: LEAD_NAME
         description: "Name of the lead."
-
       - name: SERVICE_CITY
         description: "City where service is requested."
-
       - name: SERVICE_STATE
         description: "State where service is requested."
-
       - name: SERVICE_POSTAL_CODE
         description: "Postal code of service location."
-
       - name: SERVICE_ADDRESS_1
         description: "Primary service address."
-
       - name: SERVICE_ADDRESS_2
         description: "Secondary service address."
-
       - name: LONGITUDE
         description: "Longitude of service location."
-
       - name: LATITUDE
         description: "Latitude of service location."
-
       - name: LEAD_CATEGORY
         description: "Category of the lead."
-
       - name: LEAD_DATE
         description: "Effective lead date considering appointments."
         tests: [not_null]
-
       - name: CAMPAIGN_ID
         description: "Linked campaign identifier."
         tests:
           - relationships:
               to: ref('d_campaigns')
               field: CAMPAIGN_ID
-
       - name: PC_ORGANIZATION_ID
         description: "Organization ID linked to the lead."
 
-
-version: 2
-
-models:
-  - name: store_forecast
+  - name: STORE_FORECAST
     description: "Monthly store-level forecast targets compared with actual invoice performance."
     columns:
       - name: STORE_ID
@@ -172,37 +128,26 @@ models:
       - name: INVOICE_BALANCE_DUE
         description: "Total remaining balance due on invoices for the store and month."
 
-version: 2
-
-models:
-  - name: d_appointment
+  - name: D_APPOINTMENTS
     description: "Appointment dimension linking stores, invoices, leads, proposals, and services."
     columns:
       - name: appointment_id
         description: "Unique ID for each appointment."
         tests: [unique, not_null]
-
       - name: store_id
         description: "Store linked to the appointment."
         tests: [not_null]
-
       - name: invoice_id
         description: "Invoice linked to the appointment."
-      
       - name: proposal_id
         description: "Proposal linked to the appointment."
-      
       - name: lead_id
         description: "Lead (customer) linked to the appointment."
-
       - name: campaign_id
         description: "Marketing campaign (currently null placeholder)."
-      
       - name: service_id
         description: "Service associated with the proposal."
-      
       - name: service_agent_id
         description: "Agent responsible for the service."
-      
       - name: appointment_type
         description: "Type of appointment (recurring, single, etc.)."

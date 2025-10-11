@@ -1,54 +1,59 @@
-{{config(materialized='table')}}
 
-with itm_services as (
-    select distinct
-        itm.ITM_REVENUE_CATEGORY as SERVICE_CATEGORY,
-        itm.ITM_NAME as SERVICE
-    from {{ source('dd_dwh', 'ITEM') }} itm
-    left join {{ party_organization() }} po
-        on itm.ITM_STORE_ID = po.PO_INTERNAL_PARTY_ID
-    where itm.ITM_TYPE = 0
-      and {{ exclude_invalid_org('po') }}
-      and itm.ITM_REVENUE_CATEGORY <> 'nan'
+{{ config(materialized='table') }}
+
+--===============================================--
+--======== SERVICES UNIONED AND DEDUPED =========--
+--===============================================--
+WITH ITM_SERVICES AS (
+    SELECT DISTINCT
+        ITM.ITM_REVENUE_CATEGORY AS SERVICE_CATEGORY
+        ,ITM.ITM_NAME AS SERVICE
+    FROM {{ source('DD_DWH', 'ITEM') }} AS ITM
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON ITM.ITM_STORE_ID = PO.PO_INTERNAL_PARTY_ID
+    WHERE ITM.ITM_TYPE = 0
+      AND {{ exclude_invalid_org('PO') }}
+      AND ITM.ITM_REVENUE_CATEGORY <> 'nan'
 ),
 
-inv_services as (
-    select distinct
-        inv.ORD_INV_REVENUE_CATEGORY as SERVICE_CATEGORY,
-        inv.ORD_INV_SERVICE_NAME as SERVICE
-    from {{ source('dd_dwh', 'ORDER_INVOICE') }} inv
-    left join {{ party_organization() }} po
-        on inv.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID = po.PO_INTERNAL_PARTY_ID
-    where {{ exclude_invalid_org('po') }}
-      and inv.ORD_INV_REVENUE_CATEGORY <> 'nan'
+INV_SERVICES AS (
+    SELECT DISTINCT
+        INV.ORD_INV_REVENUE_CATEGORY AS SERVICE_CATEGORY
+        ,INV.ORD_INV_SERVICE_NAME AS SERVICE
+    FROM {{ source('DD_DWH', 'ORDER_INVOICE') }} AS INV
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON INV.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID = PO.PO_INTERNAL_PARTY_ID
+    WHERE {{ exclude_invalid_org('PO') }}
+      AND INV.ORD_INV_REVENUE_CATEGORY <> 'nan'
 ),
 
-prop_services as (
-    select distinct
-        prop.CJ_REVENUE_CATEGORY as SERVICE_CATEGORY,
-        prop.CJ_SERVICE_NAME as SERVICE
-    from {{ source('dd_dwh', 'CUSTOMER_JOURNEY_PROPOSALS') }} prop
-    left join {{ party_organization() }} po
-        on prop.CJ_PROP_INTERNAL_ORGANIZATION_PARTY_ID = po.PO_INTERNAL_PARTY_ID
-    where {{ exclude_invalid_org('po') }}
-      and prop.CJ_REVENUE_CATEGORY <> 'nan'
+PROP_SERVICES AS (
+    SELECT DISTINCT
+        PROP.CJ_REVENUE_CATEGORY AS SERVICE_CATEGORY
+        ,PROP.CJ_SERVICE_NAME AS SERVICE
+    FROM {{ source('DD_DWH', 'CUSTOMER_JOURNEY_PROPOSALS') }} AS PROP
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON PROP.CJ_PROP_INTERNAL_ORGANIZATION_PARTY_ID = PO.PO_INTERNAL_PARTY_ID
+    WHERE {{ exclude_invalid_org('PO') }}
+      AND PROP.CJ_REVENUE_CATEGORY <> 'nan'
 ),
 
-unioned as (
-    select * from itm_services
-    union
-    select * from inv_services
-    union
-    select * from prop_services
+UNIONED AS (
+    SELECT * FROM ITM_SERVICES
+    UNION
+    SELECT * FROM INV_SERVICES
+    UNION
+    SELECT * FROM PROP_SERVICES
 ),
 
-deduped as (
-    select distinct
-        row_number() over(order by service_category, service) as SERVICE_ID,
-        SERVICE_CATEGORY,
-        SERVICE
-    from unioned
+DEDUPED AS (
+    SELECT DISTINCT
+        ROW_NUMBER() OVER (ORDER BY SERVICE_CATEGORY, SERVICE) AS SERVICE_ID
+        ,SERVICE_CATEGORY
+        ,SERVICE
+    FROM UNIONED
 )
 
-select * 
-from deduped
+SELECT *
+FROM DEDUPED
+;

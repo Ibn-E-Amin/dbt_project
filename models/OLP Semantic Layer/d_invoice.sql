@@ -1,52 +1,57 @@
+
+
+
 {{ config(materialized='table') }}
 
-with base as (
-
-    select distinct
-        inv.ORD_INV_INTERNAL_INVOICE_ID AS INVOICE_ID,
-        inv.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID AS STORE_ID,
-        COALESCE(inv.ORD_INV_ROOT_PROPOSAL_ID, inv.ORD_INV_INTERNAL_INVOICE_ID) AS  PROPOSAL_ID,
-        inv.ORD_INV_INTERNAL_CUSTOMER_PARTY_ID AS LEAD_ID,
-        inv.ORD_INV_TYPE AS INVOICE_TYPE,
-        inv.ORD_INV_SERVICE_NAME AS SERVICE,
-        inv.ORD_INV_REVENUE_CATEGORY AS SERVICE_CATEGORY,
-        inv.ORD_INV_OWNER AS TEAM_MEMBER
-    from {{ source('dd_dwh', 'ORDER_INVOICE') }} inv
-    left join {{ party_organization() }} po
-        on po.PO_INTERNAL_PARTY_ID = inv.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID
-    where inv.ORD_INV_END_DATE IS NULL
-      and {{ exclude_invalid_org('po') }}
+--===============================================--
+--======== INVOICE BASE AND JOINED ==============--
+--===============================================--
+WITH BASE AS (
+    SELECT DISTINCT
+        INV.ORD_INV_INTERNAL_INVOICE_ID AS INVOICE_ID
+        ,INV.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID AS STORE_ID
+        ,COALESCE(INV.ORD_INV_ROOT_PROPOSAL_ID, INV.ORD_INV_INTERNAL_INVOICE_ID) AS PROPOSAL_ID
+        ,INV.ORD_INV_INTERNAL_CUSTOMER_PARTY_ID AS LEAD_ID
+        ,INV.ORD_INV_TYPE AS INVOICE_TYPE
+        ,INV.ORD_INV_SERVICE_NAME AS SERVICE
+        ,INV.ORD_INV_REVENUE_CATEGORY AS SERVICE_CATEGORY
+        ,INV.ORD_INV_OWNER AS TEAM_MEMBER
+    FROM {{ source('DD_DWH', 'ORDER_INVOICE') }} AS INV
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON PO.PO_INTERNAL_PARTY_ID = INV.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID
+    WHERE INV.ORD_INV_END_DATE IS NULL
+      AND {{ exclude_invalid_org('PO') }}
 ),
 
-joined as (
-
-    select
-        b.INVOICE_ID,
-        b.STORE_ID,
-        b.PROPOSAL_ID,
-        b.LEAD_ID,
-        b.INVOICE_TYPE,
-        null as CAMPAIGN_ID,
-        s.SERVICE_ID,
-        b.TEAM_MEMBER
-    from base b
-    left join {{ ref('d_services') }} s
-        on s.SERVICE = b.SERVICE
-        and s.SERVICE_CATEGORY = b.SERVICE_CATEGORY
+JOINED AS (
+    SELECT
+        B.INVOICE_ID
+        ,B.STORE_ID
+        ,B.PROPOSAL_ID
+        ,B.LEAD_ID
+        ,B.INVOICE_TYPE
+        ,NULL AS CAMPAIGN_ID
+        ,S.SERVICE_ID
+        ,B.TEAM_MEMBER
+    FROM BASE AS B
+    LEFT JOIN {{ ref('D_SERVICES') }} AS S
+        ON S.SERVICE = B.SERVICE
+        AND S.SERVICE_CATEGORY = B.SERVICE_CATEGORY
 ),
 
-deletion_event as (
-    select *
-    from joined j
-    where {{exclude_deleted_invoices("j", 3, 'INVOICE_ID')}}
+DELETION_EVENT AS (
+    SELECT *
+    FROM JOINED AS J
+    WHERE {{ exclude_deleted_invoices('J', 3, 'INVOICE_ID') }}
 ),
 
-excl_unapproved as (
-    select *
-    from deletion_event d
-    where {{ exclude_unapproved_invoices("d") }}
+EXCL_UNAPPROVED AS (
+    SELECT *
+    FROM DELETION_EVENT AS D
+    WHERE {{ exclude_unapproved_invoices('D') }}
 )
 
-select *
-from excl_unapproved
+SELECT *
+FROM EXCL_UNAPPROVED
+;
 

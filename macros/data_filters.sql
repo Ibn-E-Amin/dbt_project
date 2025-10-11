@@ -1,14 +1,14 @@
 {% macro order_invoice() %}
     (
         select *
-        from {{ source('dd_dwh', 'ORDER_INVOICE') }}
+        from {{ source('DD_DWH', 'ORDER_INVOICE') }}
     )
 {% endmacro %}
 
 {% macro party_organization() %}
     (
         select *
-        from {{ source('dd_dwh', 'PARTY_ORGANIZATION') }}
+        from {{ source('DD_DWH', 'PARTY_ORGANIZATION') }}
         where PO_END_DATE is null
     )
 {% endmacro %}
@@ -36,7 +36,7 @@
 {% macro exclude_deleted_invoices(alias, alias2, columnName) %}
     {{ alias }}.{{columnName}} not in (
         select cast(ENTITYID as int)
-        from {{ source('prod_bk', 'SM_DELETION_EVENTS') }}
+        from {{ source('PROD_BK', 'SM_DELETION_EVENTS') }}
         where ENTITYTYPE = {{alias2}}
     )
 {% endmacro %}
@@ -45,7 +45,7 @@
 {% macro exclude_unapproved_invoices(alias) %}
     {{ alias }}.INVOICE_ID not in (
         select i.INVOICE_ID
-        from {{ ref('d_invoice_status')  }} i
+        from {{ ref('D_INVOICE_STATUS')  }} i
         where i.END_DATE is null
           and i.STATUS in ('Unapproved', 'Voided')
     )

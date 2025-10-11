@@ -1,50 +1,53 @@
-{{ config(
-    materialized='table'
-) }}
 
-with org_with_open_since as (
-    select
-        PO_INTERNAL_PARTY_ID,
-        case 
-            when min(case when RN = 1 then PO_OPEN_SINCE end) = '1900-01-01'
-                then min(case when RN = 2 then PO_OPEN_SINCE end)
-            else min(case when RN = 1 then PO_OPEN_SINCE end)
-        end as PO_OPEN_SINCE
-    from (
-        select
-            PO_INTERNAL_PARTY_ID,
-            PO_OPEN_SINCE,
-            dense_rank() over (
-                partition by PO_INTERNAL_PARTY_ID 
-                order by PO_OPEN_SINCE
-            ) as RN
-        from {{ source('dd_dwh', 'PARTY_ORGANIZATION') }}
-    ) ab
-    where ab.RN in (1, 2)
-    group by PO_INTERNAL_PARTY_ID
+{{ config(materialized='table') }}
+
+--===============================================--
+--======== STORE ORGANIZATION DATA ==============--
+--===============================================--
+WITH ORG_WITH_OPEN_SINCE AS (
+    SELECT
+        PO_INTERNAL_PARTY_ID
+        ,CASE
+            WHEN MIN(CASE WHEN RN = 1 THEN PO_OPEN_SINCE END) = '1900-01-01'
+                THEN MIN(CASE WHEN RN = 2 THEN PO_OPEN_SINCE END)
+            ELSE MIN(CASE WHEN RN = 1 THEN PO_OPEN_SINCE END)
+        END AS PO_OPEN_SINCE
+    FROM (
+        SELECT
+            PO_INTERNAL_PARTY_ID
+            ,PO_OPEN_SINCE
+            ,DENSE_RANK() OVER (
+                PARTITION BY PO_INTERNAL_PARTY_ID
+                ORDER BY PO_OPEN_SINCE
+            ) AS RN
+        FROM {{ source('DD_DWH', 'PARTY_ORGANIZATION') }}
+    ) AB
+    WHERE AB.RN IN (1, 2)
+    GROUP BY PO_INTERNAL_PARTY_ID
 ),
 
-latest_data as (
-    select
-        p_org.PO_INTERNAL_PARTY_ID as STORE_ID,
-        1 as BRAND_ID,
-        p_org.PO_INTERNAL_NAME as STORE_NAME,
-        p_org.PO_ACCOUNT_MANAGER as ACCOUNT_MANAGER,
-        null as COUNTRY,
-        p_org.PO_REGION as REGION,
-        org_os.PO_OPEN_SINCE as OPEN_SINCE,
-        case 
-            when PO_CANCEL_DATE is not null and PO_CANCEL_DATE not in ('None', 'nan') then 'TERMINATED'
-            when PO_TRIAL_EXPIRATION_DATE is not null and PO_TRIAL_EXPIRATION_DATE not in ('None', 'nan') then 'TERMINATED'
-            when PO_SUSPENDED is null or PO_SUSPENDED = 1 then 'TERMINATED'
-            else 'ACTIVE'
-        end as STATUS
-    from {{ source('dd_dwh', 'PARTY_ORGANIZATION') }} p_org
-    left join org_with_open_since org_os
-        on p_org.PO_INTERNAL_PARTY_ID = org_os.PO_INTERNAL_PARTY_ID
-    where p_org.PO_END_DATE is null
-      and {{exclude_invalid_org('p_org')}}
+LATEST_DATA AS (
+    SELECT
+        P_ORG.PO_INTERNAL_PARTY_ID AS STORE_ID
+        ,1 AS BRAND_ID
+        ,P_ORG.PO_INTERNAL_NAME AS STORE_NAME
+        ,P_ORG.PO_ACCOUNT_MANAGER AS ACCOUNT_MANAGER
+        ,NULL AS COUNTRY
+        ,P_ORG.PO_REGION AS REGION
+        ,ORG_OS.PO_OPEN_SINCE AS OPEN_SINCE
+        ,CASE
+            WHEN PO_CANCEL_DATE IS NOT NULL AND PO_CANCEL_DATE NOT IN ('None', 'nan') THEN 'TERMINATED'
+            WHEN PO_TRIAL_EXPIRATION_DATE IS NOT NULL AND PO_TRIAL_EXPIRATION_DATE NOT IN ('None', 'nan') THEN 'TERMINATED'
+            WHEN PO_SUSPENDED IS NULL OR PO_SUSPENDED = 1 THEN 'TERMINATED'
+            ELSE 'ACTIVE'
+        END AS STATUS
+    FROM {{ source('DD_DWH', 'PARTY_ORGANIZATION') }} AS P_ORG
+    LEFT JOIN ORG_WITH_OPEN_SINCE AS ORG_OS
+        ON P_ORG.PO_INTERNAL_PARTY_ID = ORG_OS.PO_INTERNAL_PARTY_ID
+    WHERE P_ORG.PO_END_DATE IS NULL
+      AND {{ exclude_invalid_org('P_ORG') }}
 )
 
-select *
-from latest_data
+SELECT *
+FROM LATEST_DATA
+;

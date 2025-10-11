@@ -1,25 +1,29 @@
-{{ config(
-    materialized='table'
-) }}
 
-with appointment_status as (
-    select
-        appt.CJ_INTERNAL_APPT_ID as APPOINTMENT_ID,
-        appt.CJ_APPT_STATUS as STATUS,
-        appt.CJ_APPT_START_DATE as START_DATE,
-        appt.CJ_APPT_END_DATE as END_DATE
-    from {{ source('dd_dwh', 'CUSTOMER_JOURNEY_APPOINTMENTS') }} appt
-    left join {{party_organization()}} po
-        on appt.CJ_APPT_INTERNAL_ORGANIZATION_PARTY_ID = po.PO_INTERNAL_PARTY_ID
-    where appt.CJ_INTERNAL_APPT_ID is not null
-      and {{exclude_invalid_org('po')}}
+
+{{ config(materialized='table') }}
+
+--===============================================--
+--======== APPOINTMENT STATUS ===================--
+--===============================================--
+WITH APPOINTMENT_STATUS AS (
+    SELECT
+        APPT.CJ_INTERNAL_APPT_ID AS APPOINTMENT_ID
+        ,APPT.CJ_APPT_STATUS AS STATUS
+        ,APPT.CJ_APPT_START_DATE AS START_DATE
+        ,APPT.CJ_APPT_END_DATE AS END_DATE
+    FROM {{ source('DD_DWH', 'CUSTOMER_JOURNEY_APPOINTMENTS') }} AS APPT
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON APPT.CJ_APPT_INTERNAL_ORGANIZATION_PARTY_ID = PO.PO_INTERNAL_PARTY_ID
+    WHERE APPT.CJ_INTERNAL_APPT_ID IS NOT NULL
+      AND {{ exclude_invalid_org('PO') }}
 ),
 
-excl_deleted as (
-    select *
-    from appointment_status appt
-    where {{ exclude_deleted_invoices("appt", 1,'APPOINTMENT_ID') }}
+EXCL_DELETED AS (
+    SELECT *
+    FROM APPOINTMENT_STATUS AS APPT
+    WHERE {{ exclude_deleted_invoices('APPT', 1, 'APPOINTMENT_ID') }}
 )
 
-select * 
-from excl_deleted
+SELECT *
+FROM EXCL_DELETED
+;

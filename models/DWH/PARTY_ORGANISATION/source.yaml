@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: RAW
+    schema: PROD_BK         
+    tables:
+      - name: SM_ORGANISATIONS
+      - name: SM_CONTACTS
+      - name: SM_ORGANISATION_ACCOUNT_MANAGERS
+      - name: SM_SERVICES

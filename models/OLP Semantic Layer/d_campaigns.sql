@@ -1,21 +1,27 @@
+
+
 {{ config(materialized='table') }}
 
-with filtered as (
-    select 
-        ROW_NUMBER()OVER(ORDER BY CAM_PARTY_ORGANIZATION_ID, CAM_CAMPAIGN_NAME, CAM_CHANNEL_NAME) AS CAMPAIGN_ID,
-        CAM_PARTY_ORGANIZATION_ID AS STORE_ID,
-        CAM_CHANNEL_NAME AS CHANNEL,
-        CAM_CAMPAIGN_NAME AS CAMPAIGN
-    from {{source('dd_dwh', 'CAMPAIGN')}} c
-    left join {{party_organization()}} po
-        on po.PO_INTERNAL_PARTY_ID = c.CAM_PARTY_ORGANIZATION_ID
-    where c.CAM_SOURCE = 'CONTACTS'
-        and c.CAM_PARTY_ORGANIZATION_ID is not null
-        and {{ exclude_invalid_org("po") }}
-    group by c.CAM_PARTY_ORGANIZATION_ID,
-             c.CAM_CHANNEL_NAME,
-             c.CAM_CAMPAIGN_NAME
+--===============================================--
+--======== CAMPAIGN FILTERED ====================--
+--===============================================--
+WITH FILTERED AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY CAM_PARTY_ORGANIZATION_ID, CAM_CAMPAIGN_NAME, CAM_CHANNEL_NAME) AS CAMPAIGN_ID
+        ,CAM_PARTY_ORGANIZATION_ID AS STORE_ID
+        ,CAM_CHANNEL_NAME AS CHANNEL
+        ,CAM_CAMPAIGN_NAME AS CAMPAIGN
+    FROM {{ source('DD_DWH', 'CAMPAIGN') }} AS C
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON PO.PO_INTERNAL_PARTY_ID = C.CAM_PARTY_ORGANIZATION_ID
+    WHERE C.CAM_SOURCE = 'CONTACTS'
+        AND C.CAM_PARTY_ORGANIZATION_ID IS NOT NULL
+        AND {{ exclude_invalid_org('PO') }}
+    GROUP BY C.CAM_PARTY_ORGANIZATION_ID
+        ,C.CAM_CHANNEL_NAME
+        ,C.CAM_CAMPAIGN_NAME
 )
 
-select * 
-from filtered;
+SELECT *
+FROM FILTERED
+;

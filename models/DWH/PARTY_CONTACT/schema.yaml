@@ -1,0 +1,272 @@
+# version: 2
+
+# models:
+#   - name: dwh_party_contact
+#     description: "Dimension table containing contact-level party information with SCD Type-2 handling (incremental load with start and end dates)."
+#     columns:
+#       - name: pc_party_id
+#         description: "Unique hash identifier for the party contact (ID + type + brand)."
+#         tests:
+#           - not_null
+#           - unique
+
+#       - name: pc_internal_party_id
+#         description: "Natural key (source contact ID)."
+#         tests:
+#           - not_null
+
+#       - name: pc_party_type_code
+#         description: "Type code assigned to contacts (constant = 3)."
+#         tests:
+#           - not_null
+
+#       - name: pc_party_origin
+#         description: "Origin of the party record, e.g., 'CONTACTS'."
+
+#       - name: pc_organization_id
+#         description: "Organization ID associated with the contact."
+
+#       - name: pc_campaign_id
+#         description: "Hashed campaign ID for the contact."
+
+#       - name: pc_channel_id
+#         description: "Hashed channel ID for the contact."
+
+#       - name: pc_utm_campaign
+#         description: "UTM campaign string from source."
+
+#       - name: pc_campaign
+#         description: "Campaign name."
+
+#       - name: pc_channel
+#         description: "Channel name."
+
+#       - name: pc_accounting_class
+#         description: "Accounting class associated with the contact."
+
+#       - name: pc_name
+#         description: "Contact name."
+
+#       - name: pc_company
+#         description: "Company associated with the contact."
+
+#       - name: pc_created_by
+#         description: "User who created the record."
+
+#       - name: pc_role
+#         description: "Role of the contact."
+
+#       - name: pc_category
+#         description: "Category assigned to the contact."
+
+#       - name: pc_service_city
+#         description: "Service city of the contact."
+
+#       - name: pc_service_state
+#         description: "Service state of the contact."
+
+#       - name: pc_service_postal_code
+#         description: "Postal code of the service address."
+
+#       - name: pc_longitude
+#         description: "Longitude of the service location."
+
+#       - name: pc_latitude
+#         description: "Latitude of the service location."
+
+#       - name: pc_card_on_file
+#         description: "Flag if card is on file."
+
+#       - name: pc_payment_on_file_kind
+#         description: "Type of payment on file."
+
+#       - name: pc_tags
+#         description: "Tags associated with the contact."
+
+#       - name: pc_created_at
+#         description: "Record creation timestamp."
+
+#       - name: pc_api_key
+#         description: "API key associated with the contact."
+
+#       - name: pc_lifetime_value
+#         description: "Lifetime value of the contact."
+
+#       - name: pc_flash_message
+#         description: "Flash message associated with the contact."
+
+#       - name: pc_delete_flag
+#         description: "Flag if record is deleted."
+
+#       - name: pc_delete_date
+#         description: "Date the record was deleted."
+
+#       - name: pc_created_run_id
+#         description: "ETL run ID that created this record."
+#         tests:
+#           - not_null
+
+#       - name: pc_start_date
+#         description: "Effective start date of the record."
+#         tests:
+#           - not_null
+
+#       - name: pc_end_date
+#         description: "Effective end date of the record (NULL if current)."
+
+#       - name: pc_updated_run_id
+#         description: "ETL run ID that last updated this record."
+
+#       - name: pc_brand
+#         description: "Brand assigned to this record."
+#         tests:
+#           - not_null
+version: 2
+
+models:
+  - name: dwh_party_contact
+    description: "Dimension table containing contact-level party information with SCD Type-2 handling (incremental load with start and end dates)."
+    columns:
+      - name: pc_party_id
+        description: "Unique hash identifier for the party contact (ID + type + brand)."
+        tests:
+          - not_null
+          - unique
+
+      - name: pc_internal_party_id
+        description: "Natural key (source contact ID)."
+        tests:
+          - not_null
+
+      - name: pc_party_type_code
+        description: "Type code assigned to contacts (constant = 3)."
+        tests:
+          - not_null
+
+      - name: pc_party_origin
+        description: "Origin of the party record, e.g., 'CONTACTS'."
+
+      - name: pc_organization_id
+        description: "Organization ID associated with the contact."
+        tests:
+          - relationships:
+              to: ref('dwh_party_organization')
+              field: po_internal_party_id
+
+      - name: pc_campaign_id
+        description: "Hashed campaign ID for the contact."
+
+      - name: pc_channel_id
+        description: "Hashed channel ID for the contact."
+        tests:
+          - relationships:
+              to: ref('DWH_CHANNELS')
+              field: chn_internal_channel_id
+
+      - name: pc_utm_campaign
+        description: "UTM campaign string from source."
+
+      - name: pc_campaign
+        description: "Campaign name."
+
+      - name: pc_channel
+        description: "Channel name."
+
+      - name: pc_accounting_class
+        description: "Accounting class associated with the contact."
+
+      - name: pc_name
+        description: "Contact name."
+
+      - name: pc_company
+        description: "Company associated with the contact."
+
+      - name: pc_created_by
+        description: "User who created the record."
+
+      - name: pc_role
+        description: "Role of the contact."
+
+      - name: pc_category
+        description: "Category assigned to the contact."
+
+      - name: pc_service_city
+        description: "Service city of the contact."
+
+      - name: pc_service_state
+        description: "Service state of the contact."
+
+      - name: pc_service_postal_code
+        description: "Postal code of the service address."
+
+      - name: pc_longitude
+        description: "Longitude of the service location."
+
+      - name: pc_latitude
+        description: "Latitude of the service location."
+
+      - name: pc_card_on_file
+        description: "Flag if card is on file."
+
+      - name: pc_payment_on_file_kind
+        description: "Type of payment on file."
+
+      - name: pc_tags
+        description: "Tags associated with the contact."
+
+      - name: pc_created_at
+        description: "Record creation timestamp."
+
+      - name: pc_api_key
+        description: "API key associated with the contact."
+
+      - name: pc_lifetime_value
+        description: "Lifetime value of the contact."
+
+      - name: pc_flash_message
+        description: "Flash message associated with the contact."
+
+      - name: pc_delete_flag
+        description: "Flag if record is deleted."
+
+      - name: pc_delete_date
+        description: "Date the record was deleted."
+
+      - name: pc_created_run_id
+        description: "ETL run ID that created this record."
+        tests:
+          - not_null
+
+      - name: pc_start_date
+        description: "Effective start date of the record."
+        tests:
+          - not_null
+
+      - name: pc_end_date
+        description: "Effective end date of the record (NULL if current)."
+
+      - name: pc_updated_run_id
+        description: "ETL run ID that last updated this record."
+
+      - name: pc_brand
+        description: "Brand assigned to this record."
+        tests:
+          - not_null
+
+
+tests:
+      - relationships:
+          name: pc_org_fk
+          description: "Contact.organization_id must map to Party Organization"
+          arguments:
+            column_name: pc_organization_id
+            to: ref('DWH_PARTY_ORGANIZATION')
+            field: po_internal_party_id
+
+      - relationships:
+          name: pc_channel_fk
+          description: "Contact.channel_id must map to Channels"
+          arguments:
+            column_name: pc_channel_id
+            to: ref('DWH_CHANNELS')
+            field: chn_internal_channel_id

@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: RAW
+    schema: PROD_BK         
+    tables:
+      - name: SM_ORGANISATION_USERS
+      

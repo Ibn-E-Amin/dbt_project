@@ -1,55 +1,61 @@
+
+
 {{ config(materialized='table') }}
 
-with contacts_leads as (
-    select distinct
-        PC.PC_INTERNAL_PARTY_ID as LEAD_ID,
-        PC.PC_NAME as LEAD_NAME,
-        PC.PC_SERVICE_CITY as SERVICE_CITY,
-        PC.PC_SERVICE_STATE as SERVICE_STATE,
-        PC.PC_SERVICE_POSTAL_CODE as SERVICE_POSTAL_CODE,
-        PT.PT_ADDRESS_1 as SERVICE_ADDRESS_1,
-        PT.PT_ADDRESS_2 as SERVICE_ADDRESS_2,
-        nullif(PC.PC_LONGITUDE, 0) as LONGITUDE,
-        nullif(PC.PC_LATITUDE, 0) as LATITUDE,
-        PC.PC_CATEGORY as LEAD_CATEGORY,
-        PC.PC_CREATED_AT as LEAD_DATE,
-        CAM.CAMPAIGN_ID,
-        PC.PC_ORGANIZATION_ID
-    from {{ source('dd_dwh', 'PARTY_CONTACT') }} PC
-    left join {{ party_organization() }} PO
-        on PO.PO_INTERNAL_PARTY_ID = PC.PC_ORGANIZATION_ID
-    left join (
-                select *
-                from {{source('dd_dwh', 'PARTY')}}
-                where PT_END_DATE is null
-              ) PT
-        on PT.PT_INTERNAL_PARTY_ID = PC.PC_INTERNAL_PARTY_ID
-    left join {{ ref('d_campaigns') }} CAM
-        on CAM.CAMPAIGN = PC.PC_CAMPAIGN
-       and CAM.CHANNEL = PC.PC_CHANNEL
-       and CAM.STORE_ID = PC.PC_ORGANIZATION_ID
-    where {{exclude_invalid_org('PO')}}
-    and PC.PC_END_DATE is null
+--===============================================--
+--======== LEAD CONTACTS AND EXCLUDED ===========--
+--===============================================--
+WITH CONTACTS_LEADS AS (
+    SELECT DISTINCT
+        PC.PC_INTERNAL_PARTY_ID AS LEAD_ID
+        ,PC.PC_NAME AS LEAD_NAME
+        ,PC.PC_SERVICE_CITY AS SERVICE_CITY
+        ,PC.PC_SERVICE_STATE AS SERVICE_STATE
+        ,PC.PC_SERVICE_POSTAL_CODE AS SERVICE_POSTAL_CODE
+        ,PT.PT_ADDRESS_1 AS SERVICE_ADDRESS_1
+        ,PT.PT_ADDRESS_2 AS SERVICE_ADDRESS_2
+        ,NULLIF(PC.PC_LONGITUDE, 0) AS LONGITUDE
+        ,NULLIF(PC.PC_LATITUDE, 0) AS LATITUDE
+        ,PC.PC_CATEGORY AS LEAD_CATEGORY
+        ,PC.PC_CREATED_AT AS LEAD_DATE
+        ,CAM.CAMPAIGN_ID
+        ,PC.PC_ORGANIZATION_ID
+    FROM {{ source('DD_DWH', 'PARTY_CONTACT') }} AS PC
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON PO.PO_INTERNAL_PARTY_ID = PC.PC_ORGANIZATION_ID
+    LEFT JOIN (
+        SELECT *
+        FROM {{ source('DD_DWH', 'PARTY') }}
+        WHERE PT_END_DATE IS NULL
+    ) AS PT
+        ON PT.PT_INTERNAL_PARTY_ID = PC.PC_INTERNAL_PARTY_ID
+    LEFT JOIN {{ ref('D_CAMPAIGNS') }} AS CAM
+        ON CAM.CAMPAIGN = PC.PC_CAMPAIGN
+        AND CAM.CHANNEL = PC.PC_CHANNEL
+        AND CAM.STORE_ID = PC.PC_ORGANIZATION_ID
+    WHERE {{ exclude_invalid_org('PO') }}
+      AND PC.PC_END_DATE IS NULL
 ),
 
-excl_deleted as (
-    select *
-    from contacts_leads cl
-    where {{ exclude_deleted_invoices("cl", 0,'LEAD_ID') }}
+EXCL_DELETED AS (
+    SELECT *
+    FROM CONTACTS_LEADS AS CL
+    WHERE {{ exclude_deleted_invoices('CL', 0, 'LEAD_ID') }}
 )
 
-select
-    CL.LEAD_ID,
-    CL.LEAD_NAME,
-    CL.SERVICE_CITY,
-    CL.SERVICE_STATE,
-    CL.SERVICE_POSTAL_CODE,
-    CL.SERVICE_ADDRESS_1,
-    CL.SERVICE_ADDRESS_2,
-    CL.LONGITUDE,
-    CL.LATITUDE,
-    CL.LEAD_CATEGORY,
-    cast(CL.LEAD_DATE as date) as LEAD_DATE,
-    CL.CAMPAIGN_ID,
-    CL.PC_ORGANIZATION_ID
-from contacts_leads CL
+SELECT
+    CL.LEAD_ID
+    ,CL.LEAD_NAME
+    ,CL.SERVICE_CITY
+    ,CL.SERVICE_STATE
+    ,CL.SERVICE_POSTAL_CODE
+    ,CL.SERVICE_ADDRESS_1
+    ,CL.SERVICE_ADDRESS_2
+    ,CL.LONGITUDE
+    ,CL.LATITUDE
+    ,CL.LEAD_CATEGORY
+    ,CAST(CL.LEAD_DATE AS DATE) AS LEAD_DATE
+    ,CL.CAMPAIGN_ID
+    ,CL.PC_ORGANIZATION_ID
+FROM CONTACTS_LEADS AS CL
+;

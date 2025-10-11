@@ -1,31 +1,35 @@
 
 {{ config(materialized='table') }}
 
-with filtered as (
-    select
-        i.ORD_INV_INTERNAL_INVOICE_ID as INVOICE_ID,
-        i.ORD_INV_STATUS as STATUS,
-        i.ORD_INV_START_DATE as START_DATE,
-        i.ORD_INV_END_DATE as END_DATE
-    from {{order_invoice()}} i
-    left join {{party_organization()}} po
-        on po.PO_INTERNAL_PARTY_ID = i.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID
-    where i.ORD_INV_END_DATE is null
-      and {{ exclude_invalid_org("po") }}
+--===============================================--
+--======== INVOICE STATUS FILTERED ===============--
+--===============================================--
+WITH FILTERED AS (
+    SELECT
+        I.ORD_INV_INTERNAL_INVOICE_ID AS INVOICE_ID
+        ,I.ORD_INV_STATUS AS STATUS
+        ,I.ORD_INV_START_DATE AS START_DATE
+        ,I.ORD_INV_END_DATE AS END_DATE
+    FROM {{ order_invoice() }} AS I
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON PO.PO_INTERNAL_PARTY_ID = I.ORD_INV_INTERNAL_ORGANIZATION_PARTY_ID
+    WHERE I.ORD_INV_END_DATE IS NULL
+      AND {{ exclude_invalid_org('PO') }}
 ),
 
-deletion_event as (
-    select *
-    from filtered f
-    where {{exclude_deleted_invoices("f", 3, 'INVOICE_ID')}}
+DELETION_EVENT AS (
+    SELECT *
+    FROM FILTERED AS F
+    WHERE {{ exclude_deleted_invoices('F', 3, 'INVOICE_ID') }}
 ),
 
-unapproved_voided_status as (
-    select *
-    from deletion_event
-    where END_DATE is null
-    and STATUS not in ('Unapproved', 'Voided')
+UNAPPROVED_VOIDED_STATUS AS (
+    SELECT *
+    FROM DELETION_EVENT
+    WHERE END_DATE IS NULL
+      AND STATUS NOT IN ('Unapproved', 'Voided')
 )
 
-select *
-from unapproved_voided_status
+SELECT *
+FROM UNAPPROVED_VOIDED_STATUS
+;

@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: dwh_channels
+    description: "Stores channels with history tracking and hash-based surrogate key."
+    columns:
+      - name: chn_channel_id
+        description: "Surrogate key generated as SHA2_256 hash of channel and brand."
+        tests:
+          - unique
+          - not_null
+
+      - name: chn_channel_internal_id
+        description: "Source channel internal ID from STG_SM_CHANNELS."
+        tests:
+          - not_null
+
+      - name: chn_channel_name
+        description: "Name of the channel."
+        tests:
+          - not_null
+
+      - name: chn_created_run_id
+        description: "Run ID when the record was created."
+        tests:
+          - not_null
+
+      - name: chn_start_date
+        description: "Start date for the channel record."
+        tests:
+          - not_null
+
+      - name: chn_end_date
+        description: "End date for historical record. Nullable."
+       
+
+      - name: chn_updated_run_id
+        description: "Run ID when the record was updated. Nullable."
+
+      - name: chn_brand
+        description: "Brand for the channel, constant value."
+        tests:
+          - not_null

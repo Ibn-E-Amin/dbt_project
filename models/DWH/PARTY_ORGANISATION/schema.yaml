@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: DWH_PARTY_ORGANIZATION
+    description: "Dimension table for organizations (party type code 2) with SCD2 handling. Contains historical records with start and end dates."
+    columns:
+      - name: PO_PARTY_ID
+        description: "Hashed surrogate key generated using SHA2_256 over (ID | PARTY_TYPE_CODE | BRAND)."
+        tests:
+          - not_null
+
+      - name: PO_INTERNAL_PARTY_ID
+        description: "Unique internal identifier of the organization from source system."
+        tests:
+          - not_null
+          - unique
+
+      - name: PO_PARTY_TYPE_CODE
+        description: "Code that indicates party type. Always 2 for organizations."
+
+      - name: PO_PUBLIC_NAME
+        description: "Public-facing name of the organization."
+
+      - name: PO_INTERNAL_NAME
+        description: "Internal system name of the organization."
+
+      - name: PO_LEGAL_ENTITY_NAME
+        description: "Legal entity name of the organization."
+
+      - name: PO_TAXPAYER_ID
+        description: "Taxpayer identifier for the organization."
+
+      - name: PO_TIME_ZONE
+        description: "Time zone where the organization is located."
+
+      - name: PO_OPEN_TIME_GRANULARITY
+        description: "Open time granularity setting (numeric)."
+
+      - name: PO_CANCEL_DATE
+        description: "Date when the organization account was cancelled."
+
+      - name: PO_TRIAL_EXPIRATION_DATE
+        description: "Trial expiration date for the organization."
+
+      - name: PO_SUSPENDED
+        description: "Suspension flag (1 = suspended, 0 = active)."
+
+      - name: PO_BILLING_PLAN
+        description: "Billing plan associated with the organization."
+
+      - name: PO_BILLING_METHOD
+        description: "Billing method identifier (integer)."
+
+      - name: PO_ACCOUNT_MANAGER
+        description: "Assigned account manager for the organization."
+
+      - name: PO_REGION
+        description: "Geographic region associated with the organization."
+
+      - name: PO_OPEN_SINCE
+        description: "Date when the organization was first opened/created."
+
+      - name: PO_START_DATE
+        description: "Effective start date of this SCD2 record."
+        tests:
+          - not_null
+
+      - name: PO_END_DATE
+        description: "Effective end date of this SCD2 record. Null for current active records."
+
+      - name: PO_CREATED_RUN_ID
+        description: "Run identifier when the record was first created."
+
+      - name: PO_UPDATED_RUN_ID
+        description: "Run identifier when the record was last updated."
+
+      - name: PO_BRAND
+        description: "Static brand identifier. For this model, always 'Wallaby'."

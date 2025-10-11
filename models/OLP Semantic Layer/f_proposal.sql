@@ -1,28 +1,35 @@
+
+
 {{ config(materialized='table') }}
 
-with base as (
-select distinct
-    PROP.CJ_INTERNAL_PROP_ID         as PROPOSAL_ID,
-    nullif(PROP.CJ_PROP_CREATED_DATE, '1900-01-01')   as CREATE_DATE,
-    nullif(PROP.CJ_PROP_ACCEPTED_DATE, '1900-01-01')  as ACCEPTED_DATE,
-    PROP.CJ_PROP_SUBTOTAL            as SUBTOTAL,
-    PROP.CJ_PROP_VALUE               as PROPOSAL_VALUE,
-    PROP.CJ_PROP_DEPOSIT             as DEPOSIT_VALUE,
-    PROP.CJ_PROP_GROSS_SUBTOTAL      as GROSS_SUBTOTAL,
-    PROP.CJ_PROP_MATERIAL_COST       as MATERIAL_COST,
-    PROP.CJ_PROP_LABOR_COST          as LABOR_COST,
-    PROP.CJ_PROP_EXPENSES            as EXPENSES
-from {{ source('dd_dwh', 'CUSTOMER_JOURNEY_PROPOSALS') }} PROP
-left join {{party_organization()}} PO
-    on PO.PO_INTERNAL_PARTY_ID = PROP.CJ_PROP_INTERNAL_ORGANIZATION_PARTY_ID
-where {{exclude_invalid_org('PO')}}
-  and PROP.CJ_PROP_END_DATE is null
+--===============================================--
+--======== PROPOSAL FACT TABLE ==================--
+--===============================================--
+WITH BASE AS (
+    SELECT DISTINCT
+        PROP.CJ_INTERNAL_PROP_ID AS PROPOSAL_ID
+        ,NULLIF(PROP.CJ_PROP_CREATED_DATE, '1900-01-01') AS CREATE_DATE
+        ,NULLIF(PROP.CJ_PROP_ACCEPTED_DATE, '1900-01-01') AS ACCEPTED_DATE
+        ,PROP.CJ_PROP_SUBTOTAL AS SUBTOTAL
+        ,PROP.CJ_PROP_VALUE AS PROPOSAL_VALUE
+        ,PROP.CJ_PROP_DEPOSIT AS DEPOSIT_VALUE
+        ,PROP.CJ_PROP_GROSS_SUBTOTAL AS GROSS_SUBTOTAL
+        ,PROP.CJ_PROP_MATERIAL_COST AS MATERIAL_COST
+        ,PROP.CJ_PROP_LABOR_COST AS LABOR_COST
+        ,PROP.CJ_PROP_EXPENSES AS EXPENSES
+    FROM {{ source('DD_DWH', 'CUSTOMER_JOURNEY_PROPOSALS') }} AS PROP
+    LEFT JOIN {{ party_organization() }} AS PO
+        ON PO.PO_INTERNAL_PARTY_ID = PROP.CJ_PROP_INTERNAL_ORGANIZATION_PARTY_ID
+    WHERE {{ exclude_invalid_org('PO') }}
+      AND PROP.CJ_PROP_END_DATE IS NULL
 ),
 
-excl_deleted as (
-    select *
-    from base b
-    where {{ exclude_deleted_invoices("b", 2, 'PROPOSAL_ID') }}
+EXCL_DELETED AS (
+    SELECT *
+    FROM BASE AS B
+    WHERE {{ exclude_deleted_invoices('B', 2, 'PROPOSAL_ID') }}
 )
 
-select * from excl_deleted
+SELECT *
+FROM EXCL_DELETED
+;

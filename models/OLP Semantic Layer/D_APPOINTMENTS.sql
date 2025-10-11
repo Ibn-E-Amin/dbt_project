@@ -1,0 +1,49 @@
+
+
+{{ config(materialized='table') }}
+
+--===============================================--
+--======== APPOINTMENT BASE AND FINAL ===========--
+--===============================================--
+WITH APPOINTMENT_BASE AS (
+    SELECT
+        APPT.CJ_INTERNAL_APPT_ID AS APPOINTMENT_ID
+        ,APPT.CJ_APPT_INTERNAL_ORGANIZATION_PARTY_ID AS STORE_ID
+        ,APPT.CJ_APPT_INVOICE_ID AS INVOICE_ID
+        ,APPT.CJ_APPT_INTERNAL_CUSTOMER_PARTY_ID AS LEAD_ID
+        ,APPT.CJ_APPT_SERVICE AS SERVICE
+        ,APPT.CJ_APPT_SERVICE_AGENT_ID AS SERVICE_AGENT_ID
+        ,APPT.CJ_APPT_RECURRING_TYPE AS APPOINTMENT_TYPE
+        ,APPT.CJ_APPT_PROPOSAL_ID AS PROPOSAL_ID
+    FROM {{ source('DD_DWH', 'CUSTOMER_JOURNEY_APPOINTMENTS') }} AS APPT
+    LEFT JOIN {{ party_organization() }} AS O
+        ON APPT.CJ_APPT_INTERNAL_ORGANIZATION_PARTY_ID = O.PO_INTERNAL_PARTY_ID
+    WHERE APPT.CJ_APPT_END_DATE IS NULL
+      AND {{ exclude_invalid_org('O') }}
+),
+
+FINAL AS (
+    SELECT
+        A.APPOINTMENT_ID
+        ,A.STORE_ID
+        ,A.INVOICE_ID
+        ,A.PROPOSAL_ID
+        ,A.LEAD_ID
+        ,NULL AS CAMPAIGN_ID
+        ,P.SERVICE_ID
+        ,A.SERVICE_AGENT_ID
+        ,A.APPOINTMENT_TYPE
+    FROM APPOINTMENT_BASE AS A
+    LEFT JOIN {{ ref('D_PROPOSAL') }} AS P
+        ON P.PROPOSAL_ID = A.PROPOSAL_ID
+),
+
+EXCL_DELETED AS (
+    SELECT *
+    FROM FINAL AS F
+    WHERE {{ exclude_deleted_invoices('F', 1, 'APPOINTMENT_ID') }}
+)
+
+SELECT *
+FROM EXCL_DELETED
+;

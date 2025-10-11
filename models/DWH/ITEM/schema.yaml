@@ -1,0 +1,114 @@
+version: 2
+
+models:
+  - name: dwh_item
+    description: "Data warehouse table for Items (Services + Parts) with history tracking."
+    columns:
+      - name: itm_internal_id
+        description: "Internal ID from source systems"
+        tests:
+          - not_null
+
+      - name: itm_group_id
+        description: "Hash group identifier for item"
+        tests:
+          - not_null
+          - unique
+
+      - name: itm_name
+        description: "Item name"
+        tests:
+          - not_null
+
+      - name: itm_revenue_category
+        description: "Revenue category of the item"
+
+      - name: itm_description
+        description: "Item description"
+
+      - name: itm_type
+        description: "Item type (0=Service, 1=Part)"
+        tests:
+          - not_null
+          # - accepted_values:
+          #     values: [0, 1]
+
+      - name: itm_store_id
+        description: "Store ID where item belongs"
+
+      - name: itm_base_rpice
+        description: "Base price of the item"
+
+      - name: itm_unit_price
+        description: "Unit price of the item"
+
+      - name: itm_unit_cost
+        description: "Unit cost of the item"
+
+      - name: itm_base_duration
+        description: "Base duration (if applicable)"
+
+      - name: itm_unit_duration
+        description: "Unit duration (if applicable)"
+
+      - name: itm_taxable
+        description: "Whether item is taxable (0/1)"
+
+      - name: itm_active
+        description: "Active flag"
+        tests:
+          - not_null
+
+      - name: itm_internal
+        description: "Flag for internal items"
+
+      - name: itm_role
+        description: "Role of the item"
+
+      - name: itm_stock
+        description: "Stock available"
+
+      - name: itm_reorder_point
+        description: "Reorder point threshold"
+
+      - name: itm_quantity_on_order
+        description: "Quantity on order"
+
+      - name: itm_exclude_from_qbo
+        description: "Flag to exclude from QBO sync"
+
+      - name: itm_finish_action
+        description: "Finish action for the item"
+
+      - name: itm_income_account
+        description: "Income account mapping"
+
+      - name: itm_vendor
+        description: "Vendor of the item"
+
+      - name: itm_vendor_part_no
+        description: "Vendor part number"
+
+      - name: itm_queue_date
+        description: "Queue date (when item was queued)"
+
+      - name: itm_created_run_id
+        description: "Run ID when row was created"
+        tests:
+          - not_null
+
+      - name: itm_start_date
+        description: "Start date of validity"
+        tests:
+          - not_null
+
+      - name: itm_end_date
+        description: "End date of validity (null = active)"
+
+      - name: itm_updated_run_id
+        description: "Run ID when row was last updated"
+
+      - name: itm_brand
+        description: "Brand identifier"
+        tests:
+          - not_null

@@ -1,5 +1,5 @@
 sources:
-  - name: dd_dwh
+  - name: DD_DWH
     database: DWH
     schema: DD_DWH
     tables:
@@ -12,12 +12,12 @@ sources:
       - name: PARTY_CONTACT
       - name: FORECAST
       - name: CUSTOMER_JOURNEY_APPOINTMENTS
-  - name: prod_bk
+  - name: PROD_BK
     database: DWH
     schema: PROD_BK
     tables:
       - name: SM_DELETION_EVENTS
-  - name: dd_sl
+  - name: DD_SL
     database: DWH
     schema: DD_SL
     tables:
