@@ -41,22 +41,21 @@ jobs:
         run: |
           mkdir -p ~/.dbt
           cat > ~/.dbt/profiles.yml <<EOL
-dbt_testing_project:
-  target: dev
-  outputs:
-    dev:
-      type: sqlserver
-      driver: "ODBC Driver 18 for SQL Server"
-      server: "${{ secrets.SYNAPSE_SERVER }}"
-      database: "${{ secrets.SYNAPSE_DATABASE }}"
-      schema: "${{ secrets.SYNAPSE_SCHEMA }}"
-      user: "${{ secrets.SYNAPSE_USER }}"
-      password: "${{ secrets.SYNAPSE_PASSWORD }}"
-      port: 1433
-      encrypt: true
-      trust_cert: true
-EOL
-
+          dbt_testing_project:
+            target: dev
+            outputs:
+              dev:
+                type: sqlserver
+                driver: "ODBC Driver 18 for SQL Server"
+                server: "${{ secrets.SYNAPSE_SERVER }}"
+                database: "${{ secrets.SYNAPSE_DATABASE }}"
+                schema: "${{ secrets.SYNAPSE_SCHEMA }}"
+                user: "${{ secrets.SYNAPSE_USER }}"
+                password: "${{ secrets.SYNAPSE_PASSWORD }}"
+                port: 1433
+                encrypt: true
+                trust_cert: true
+          EOL
 
       # 6️⃣ Debug connection & run dbt tests
       - name: Run dbt tests
