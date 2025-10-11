@@ -102,8 +102,9 @@ models:
         description: "Linked campaign identifier."
         tests:
           - relationships:
-              to: ref('d_campaigns')
-              field: CAMPAIGN_ID
+              arguments:
+                to: ref('D_CAMPAIGNS')
+                field: CAMPAIGN_ID
       - name: PC_ORGANIZATION_ID
         description: "Organization ID linked to the lead."
 

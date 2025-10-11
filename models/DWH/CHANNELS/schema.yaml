@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: dwh_channels
+  - name: DWH_CHANNELS
     description: "Stores channels with history tracking and hash-based surrogate key."
     columns:
       - name: chn_channel_id
